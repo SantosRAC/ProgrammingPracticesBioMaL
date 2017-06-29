@@ -1,4 +1,4 @@
-# Removes all duplicated identifiers from a mirTarBase .csv and splits the output file
+# Removes all duplicated Entrez identifiers and splits the output file
 __author__      = "Henrique Frajacomo"
 
 import csv      # Import .csv files
@@ -26,7 +26,7 @@ def CsvExtractIdentifiers(myFile):
     temp = ""
     for line in myFile:
         temp = line.split(";")
-        Identifiers.append(temp[1])
+        Identifiers.append(temp[4])
     Identifiers.pop(0)
 
     return Identifiers
