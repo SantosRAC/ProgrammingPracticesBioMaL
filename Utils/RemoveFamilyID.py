@@ -59,13 +59,6 @@ def CsvWrite(myList, filename):
     Main
 
 '''
-'''
-Curefile = open("hsa_MTI curada.csv", "r")
-
-Identifiers = CsvFullExtract(Curefile)
-Identifiers = RemoveFamilyID("hsa-let-7c", Identifiers)
-CsvWrite(Identifiers, "hsa_MTI-Curada")
-'''
 
 
 file1OBJ = open(file1, "r")  # first argument .csv file
