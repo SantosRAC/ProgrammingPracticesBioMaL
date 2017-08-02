@@ -38,7 +38,7 @@ for element in fullList:
 				resultFile.write(">" + splitList[2] + "\t" + splitList[14] +"\n" + str(record.seq[start:end]) + "\n")
 				print("Plus")   # Test only
 			else:
-				resultFile.write(">" + splitList[2] + "\t" + splitList[14] +"\n" + str((record.seq[start:end])[::-1]) + "\n")
+				resultFile.write(">" + splitList[2] + "\t" + splitList[14] +"\n" + str((record.seq[start:end])[::-1]) + "\n")  #[::-1] -> reads the entry backwards
 				print("Minus")  # Test only 
 
 dataTable.close()
