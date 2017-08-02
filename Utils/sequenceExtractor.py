@@ -1,3 +1,6 @@
+# 
+__author__      = "Henrique Frajacomo"
+
 import argparse
 from Bio import SeqIO
 
@@ -19,9 +22,7 @@ resultFile = open("ResultFile.fasta", "w")
 for line in dataTable:
 	if(repeat):
  		fullList.append(line.strip('\n'))
- 	repeat = True
-
-repeat = False
+	repeat = True
 
 StartIterator = SeqIO.parse(sequenceFile, "fasta")
 Iterator = SeqIO.parse(sequenceFile, "fasta")
@@ -33,20 +34,12 @@ for element in fullList:
 		if(splitList[11] == record.id):
 			start = int(splitList[12])
 			end = int(splitList[13])
-			resultFile.write(">" + splitList[2] +"\n" + str(record.seq[start:end]))
-			print(end-start)
-
+			if(splitList[14]=="plus"):
+				resultFile.write(">" + splitList[2] + "\t" + splitList[14] +"\n" + str(record.seq[start:end]) + "\n")
+				print("Plus")   # Test only
+			else:
+				resultFile.write(">" + splitList[2] + "\t" + splitList[14] +"\n" + str((record.seq[start:end])[::-1]) + "\n")
+				print("Minus")  # Test only 
 
 dataTable.close()
 resultFile.close()
-
-'''
-for record in SeqIO.parse("sequence.fasta", "fasta"):
-	if record.id in fullList:
-		resultFile.write(">" + record.id)
-		start = 
-'''
-
-
-
- #print(">%s\n%s\n%d" % (record.id, record.seq, len(record)))
