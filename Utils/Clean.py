@@ -24,7 +24,7 @@ for record in Iterator:
 	if record.id in seqsFasta:
 		print("Duplicated sequence in genome FASTA")
 		os.exit()
-	else
+	else:
 		seqsFasta.append(record.id)
 
 # Secondaries and discontinued
@@ -32,17 +32,22 @@ for record in Iterator:
 for line in InputFile:
 	splitList = line.split('\t')
 
-	if(not splitList[0] == int(args.taxid)):
-		LogFile.write(str(splitList[3]) + ": Gene ID is not from the selected species\n")
+	if(splitList[0] == 'tax_id'):
+		OutputFile.write(line)
+		continue
+
+	if (not int(splitList[0]) == int(args.taxid)):
+		LogFile.write(str(splitList[2]) + ": Gene ID (in organism: " + splitList[0] + ") is not from the input species\n")
 		continue
 
 	if(splitList[4] == "discontinued"):
-		if (not splitlist[11] in seqsFasta):
-			LogFile.write(str(splitList[11]) + ": Nucleotide identifier for gene " +  str(splitList[2]) + " not in input FASTA\n")
-		LogFile.write(str(splitList[3]) + ": Discontinued gene identifier\n")
+		LogFile.write(str(splitList[2]) + ": Discontinued gene identifier\n")
 	elif(splitList[4] == "secondary"):
-		if (not splitlist[11] in seqsFasta):
-			LogFile.write(str(splitList[11]) + ": Nucleotide identifier for gene " +  str(splitList[3]) + " not in input FASTA\n")
+		if (not splitList[11] in seqsFasta):
+			if (str(splitList[11]) == ''):
+				LogFile.write("Nucleotide identifier for gene " +  str(splitList[3]) + " not in input FASTA (positions might be absent as well) [secondary]\n")
+			else:
+				LogFile.write(str(splitList[11]) + ": Nucleotide identifier for gene " +  str(splitList[3]) + " not in input FASTA [secondary]\n")
 		if(str(splitList[12]) != '' and str(splitList[13]) != ''):
 			OutputFile.write(line)
 		else:
@@ -52,8 +57,11 @@ for line in InputFile:
 			OutputFile.write(line)
 		else:
 			LogFile.write(str(splitList[2]) + ": No start or end positions [live]\n")
-		if (not splitlist[11] in seqsFasta):
-			LogFile.write(str(splitList[11]) + ": Nucleotide identifier for gene " +  str(splitList[2]) + " not in input FASTA\n")
+		if (not splitList[11] in seqsFasta):
+			if (str(splitList[11]) == ''):
+				LogFile.write("Nucleotide identifier for gene " +  str(splitList[2]) + " not in input FASTA [live]\n")
+			else:
+				LogFile.write(str(splitList[11]) + ": Nucleotide identifier for gene " +  str(splitList[3]) + " not in input FASTA [live]\n")
 
 
 InputFile.close()
