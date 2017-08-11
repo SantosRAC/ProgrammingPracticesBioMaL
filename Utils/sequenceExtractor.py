@@ -16,6 +16,7 @@ args = parser.parse_args()
 argTable = args.tabular
 sequenceFile = args.genomeFasta
 resultFile = args.geneFasta
+geneIdCount = {}
 
 resultFileOBJ = open(resultFile, "w")
 
@@ -31,13 +32,23 @@ for record in Iterator:
 			start = int(splitList[12])-1
 			end = int(splitList[13])
 			numberOfGenes=numberOfGenes+1
-			seq_description=splitList[2] + " [start:" + splitList[12] + "] [end:" + splitList[13] + "] [chrom:" + splitList[10] + "] [strand:" + splitList[14] +"]"
+			seq_description="[start:" + splitList[12] + "] [end:" + splitList[13] + "] [chrom:" + splitList[10] + "] [strand:" + splitList[14] +"]"
 			if(splitList[14]=="plus"):
 				generecord = SeqRecord(Seq(str(record.seq[start:end])),id=splitList[2],description=seq_description)
+				if generecord.id in geneIdCount.keys():
+					geneIdCount[str(generecord.id)]=geneIdCount[str(generecord.id)]+1
+				else:
+					geneIdCount[str(generecord.id)]=1
+				generecord.id=str(generecord.id) + "_" + str(geneIdCount[str(generecord.id)])
 				SeqIO.write(generecord,resultFileOBJ,"fasta")
 			else:
 				sequence=Seq(str(record.seq[start:end]))
 				generecord = SeqRecord(sequence.reverse_complement(),id=splitList[2],description=seq_description)
+				if generecord.id in geneIdCount.keys():
+					geneIdCount[str(generecord.id)]=geneIdCount[str(generecord.id)]+1
+				else:
+					geneIdCount[str(generecord.id)]=1
+				generecord.id=str(generecord.id) + "_" + str(geneIdCount[str(generecord.id)])
 				SeqIO.write(generecord,resultFileOBJ,"fasta")
 	dataTable.close()
 
