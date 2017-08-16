@@ -2,6 +2,7 @@ import argparse
 from Bio import SeqIO
 from Bio.SeqRecord import SeqRecord
 from Bio.Seq import Seq
+import os
 
 parser = argparse.ArgumentParser(description='Returns a fasta with aligned subsequences', add_help=True)
 parser.add_argument('-t','--tabular', dest='tabular', metavar='inputFile', type=str, help='File containing start and end position', required=True)
@@ -11,8 +12,8 @@ parser.add_argument('-ti','--taxid', dest='taxid', metavar='organism id', type=i
 args = parser.parse_args()
 
 InputFile = open(args.tabular, "r")
-OutputFile = open(args.tabular + "-Cured.txt", "w")
-LogFile = open(args.tabular + "-log.txt", "w")
+OutputFile = open(os.path.splitext(args.tabular)[0] + "-Cured.txt", "w")
+LogFile = open(os.path.splitext(args.tabular)[0] + "-log.txt", "w")
 
 Iterator = SeqIO.parse(args.genomeFasta, "fasta")
 
