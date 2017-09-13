@@ -42,7 +42,7 @@ mrna = []
 numbers = []
 linha = mrnafile.readline()
 
-while linha:  # gets the biggest and smallest entry numbers
+while linha:  # Fills all geneID Entries into a list
 	mrna.append(linha)
 	splitmRNA = linha.split("\t")
 	splitmRNAData = splitmRNA[8].split(";")
@@ -111,7 +111,7 @@ cds = []
 numbers = []
 linha = cdsfile.readline()
 
-while linha:  # gets the biggest and smallest entry numbers
+while linha:  # Fills all geneID Entries into a list
 	cds.append(linha)
 	splitCDS = linha.split("\t")
 	splitCDSData = splitCDS[8].split(";")
