@@ -184,31 +184,7 @@ finalList = []
 '''
 #-----------------------------------------------------------
 '''
-'''
-# ------------- Unused ----------------------------------------------
-mrnafile = open("mrna.gff", "r")
-
-logfile = open("cleaninglog.txt", "w")
-logfile.close()
-
-linecount = 0
-
-
-# Creates an line offset list for cds iteration
-with open("cds.gff", "r") as f:
-	cdsline = []
-	offset = 0
-	linha = f.readline()
-
-	while linha:
-		offset = f.tell()
-		cdsline.append(offset)
-		linha = f.readline()
-
-'''
-# ---------------------------------------------------------------
-'''	
-    
+'''    
 
 # Create partitions on the CDS file for quick indexing ----
 print("Creating an entry index...")
