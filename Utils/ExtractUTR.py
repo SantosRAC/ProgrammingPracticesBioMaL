@@ -2,15 +2,64 @@ import Bio
 import numpy
 import argparse
 from datetime import datetime
+import sys
+import os
+import math
 
-parser = argparse.ArgumentParser(description='Extracts CDS and mRNA entries from a gff3', add_help=True)
+def Partition_mRNA(A, start, end):
+	Pivot = int((((((A[end].split("\t"))[8].split(";"))[2].split("="))[1].split(","))[0].split(":"))[1])
+	Pindex = start
+	i = 0
+	for i in range(start,end):
+		if(int((((((A[i].split("\t"))[8].split(";"))[2].split("="))[1].split(","))[0].split(":"))[1]) <= Pivot):
+			A[i], A[Pindex] = A[Pindex], A[i]
+			Pindex = Pindex + 1
+	A[end], A[Pindex] = A[Pindex], A[end]
+	return Pindex, A
+
+def QuickSort_mRNA(A, start, end):
+	if(start < end):
+		Pindex, A = Partition_mRNA(A, start, end)
+		A = QuickSort_mRNA(A, start, Pindex-1)
+		A = QuickSort_mRNA(A, Pindex+1, end)
+	return A
+
+def Partition_CDS(A, start, end):
+	if((((((A[end].split("\t"))[8].split(";"))[2].split("="))[1].split(","))[0].split(":"))[0] == "CCDS" or (((((A[end].split("\t"))[8].split(";"))[2].split("="))[1].split(","))[0].split(":"))[0] == "Genbank"):
+		Pivot = int((((((A[end].split("\t"))[8].split(";"))[2].split("="))[1].split(","))[1].split(":"))[1])
+	else:
+		Pivot = int((((((A[end].split("\t"))[8].split(";"))[2].split("="))[1].split(","))[0].split(":"))[1])
+	Pindex = start
+	i = 0
+	for i in range(start,end):
+		if((((((A[i].split("\t"))[8].split(";"))[2].split("="))[1].split(","))[0].split(":"))[0] == "CCDS" or (((((A[i].split("\t"))[8].split(";"))[2].split("="))[1].split(","))[0].split(":"))[0] == "Genbank"):
+			CompareID = (((((A[i].split("\t"))[8].split(";"))[2].split("="))[1].split(","))[1].split(":"))[1]
+		else:
+			CompareID = (((((A[i].split("\t"))[8].split(";"))[2].split("="))[1].split(","))[0].split(":"))[1]
+		
+		if(int(CompareID) <= Pivot):
+			A[i], A[Pindex] = A[Pindex], A[i]
+			Pindex = Pindex + 1
+	A[end], A[Pindex] = A[Pindex], A[end]
+	return Pindex, A
+
+def QuickSort_CDS(A, start, end):
+	if(start < end):
+		Pindex, A = Partition_CDS(A, start, end)
+		A = QuickSort_CDS(A, start, Pindex-1)
+		A = QuickSort_CDS(A, Pindex+1, end)
+	return A
+
+
+sys.setrecursionlimit(1000000) # Default = 10000
+parser = argparse.ArgumentParser(description='Extracts UTR length from mRNA entries', add_help=True)
 parser.add_argument('-g','--gff', dest='gff', metavar='inputGFF', type=str, help='GFF containing information about features in genome', required=True)
 
 args = parser.parse_args()
 
 start_time = datetime.now()
 
-'''
+
 file = open(args.gff, "r")
 
 mrnafile = open("mrna.gff", "w")
@@ -31,160 +80,99 @@ for line in file:
 file.close()
 mrnafile.close()
 cdsfile.close()
+
 # -------------------------------------------------------
-'''
 
 # Sorts mRNA file
-'''
+
 print("Starting mRNA file sorting...")
 mrnafile = open("mrna.gff", "r")
 mrna = []
-numbers = []
 linha = mrnafile.readline()
 
-while linha:  # Fills all geneID Entries into a list
+while linha: 
 	mrna.append(linha)
-	splitmRNA = linha.split("\t")
-	splitmRNAData = splitmRNA[8].split(";")
-
-	CompareID = (((splitmRNAData[2].split("="))[1].split(","))[0].split(":"))[1]
-	numbers.append(int(CompareID))
-
 	linha = mrnafile.readline()
 
 mrnafile.close()
-numbers.sort()
 
-print("Sorting memory elements...")
-finalList = []
+mrna = QuickSort_mRNA(mrna, 0, len(mrna)-1)
 
-last_num = 0
-last_pos = 0
-i = 0
 
-while numbers:
-	i = last_pos
-	while(i < len(mrna)):
-		splitmRNA = mrna[i].split("\t")
-		splitmRNAData = splitmRNA[8].split(";")
-		CompareID = (((splitmRNAData[2].split("="))[1].split(","))[0].split(":"))[1]
-		if(int(CompareID) == numbers[0]):
-			finalList.append(mrna[i])
-			mrna.pop(i)
-			try:
-				if(numbers[1] == numbers[0]):  # Partitioning
-					last_pos = i
-			except IndexError:
-				pass
-			else:
-				last_pos = 0
-			last_num = numbers[0]
-			numbers.pop(0)
-			i = i + 1
-			break
-		i = i + 1
-
-	if(len(numbers)%100 == 0):
-		print(len(numbers))
-
-print("Time Elapsed: " + str(datetime.now() - start_time))
-
+print("Writing sorted file...")
 mrnafile = open("mrna.gff", "w")
-print("Writing sorted mRNA file...")
-
-for element in finalList:
+for element in mrna:
 	mrnafile.write(element)
+mrnafile.close()
+
 
 logfile = open("timelog.txt", "w")
 print("Time Elapsed: " + str(datetime.now() - start_time))
 logfile.write("Time Taken: " + str(datetime.now() - start_time))
 
-mrnafile.close()
-finalList = []
-'''
+
 # ------------------------------------------------------
 # Sorts CDS file
 
 print("Starting CDS file sorting...")
 cdsfile = open("cds.gff", "r")
 cds = []
-numbers = []
 linha = cdsfile.readline()
+dimension_amount = 0
+loops = 0
+cdsaux = [[]]
+Segmented = False
+FileSize = 150000
 
-while linha:  # Fills all geneID Entries into a list
+while linha: 
 	cds.append(linha)
-	splitCDS = linha.split("\t")
-	splitCDSData = splitCDS[8].split(";")
-
-	if(((splitCDSData[2].split("="))[1].split(":"))[0] == "CCDS" or ((splitCDSData[2].split("="))[1].split(":"))[0] == "Genbank"):
-		CompareID = (((splitCDSData[2].split("="))[1].split(","))[1].split(":"))[1]
-	else:
-		CompareID = (((splitCDSData[2].split("="))[1].split(","))[0].split(":"))[1]
-
-	numbers.append(int(CompareID))
-
 	linha = cdsfile.readline()
 
 cdsfile.close()
-numbers.sort()
+print("File Size (in lines): " + str(len(cds)))
 
-print("Sorting memory elements...")
-finalList = []
+# File Segmentation if neccessary
+if(len(cds)>FileSize):
+	Segmented = True
+	print("File too big, segmentating it in " + str(math.ceil((len(cds)/(FileSize-1)))) + " partitions")
+	while(len(cds)>FileSize):
+		for i in range(0,FileSize-1):
+			cdsaux[dimension_amount].append(cds.pop(0))
+			if(i%10000 == 0):
+				print("Analyzed " + str(i) + " lines")
+		loops = loops + 1
+		dimension_amount = dimension_amount + 1
+		cdsaux.append([])
+	for i in range(0, len(cds)-1):
+		if(i%10000 == 0):
+			print("Analyzed " + str(i) + " lines")
+		cdsaux[dimension_amount].append(cds.pop(0))
 
-last_num = 0
-last_pos = 0
-i = 0
+if(Segmented):
+	print("Started Sorting Process")
+	for i in range(0, dimension_amount-1):
+		cdsaux[i] = QuickSort_CDS(cdsaux[i], 0, len(cdsaux[i])-1)
 
-while numbers:
-	i = last_pos
-	while(i < len(cds)):
-		splitCDS = cds[i].split("\t")
-		splitCDSData = splitCDS[8].split(";")
+	for i in range(0, dimension_amount-1):
+		while(len(cdsaux[i])>0):
+			cds.append(cdsaux[i].pop(0))
+	cds = QuickSort_CDS(cds, 0, len(cds)-1)
 
-		if(((splitCDSData[2].split("="))[1].split(":"))[0] == "CCDS" or ((splitCDSData[2].split("="))[1].split(":"))[0] == "Genbank"):
-			CompareID = (((splitCDSData[2].split("="))[1].split(","))[1].split(":"))[1]
-		else:
-			CompareID = (((splitCDSData[2].split("="))[1].split(","))[0].split(":"))[1]
+else:
+	cds = QuickSort_CDS(cds, 0, len(cds)-1)
 
-		if(int(CompareID) == numbers[0]):
-			finalList.append(cds[i])
-			cds.pop(i)
-			try:
-				if(numbers[1] == numbers[0]):  # Partitioning
-					last_pos = i
-			except IndexError:
-				pass
-			else:
-				last_pos = 0
-			last_num = numbers[0]
-			numbers.pop(0)
-			i = i + 1
-			break
-		i = i + 1
+print("Writing sorted file...")
+cdsfile = open("cds.gff", "w")
+for element in cds:
+	cdsfile.write(element)
+cdsfile.close()
 
-	if(len(numbers)%100 == 0):
-		print(len(numbers))
-
-print("Time Elapsed: " + str(datetime.now() - start_time))
-
-
-mrnafile = open("cds.gff", "w")
-print("Writing sorted CDS file...")
-
-for element in finalList:
-	mrnafile.write(element)
 
 logfile = open("timelog.txt", "a")
-logfile.write("\n")
 print("Time Elapsed: " + str(datetime.now() - start_time))
 logfile.write("Time Taken: " + str(datetime.now() - start_time))
 
-mrnafile.close()
-finalList = []
-'''
-#-----------------------------------------------------------
-'''
-'''    
+# ---------------------------------------------------------------
 
 # Create partitions on the CDS file for quick indexing ----
 print("Creating an entry index...")
@@ -195,18 +183,19 @@ with open("cds.gff", "r") as f:
 	linha = f.readline()
 
 	while linha:
-		if((((((linha.split("\t"))[8].split(";"))[2].split("="))[1].split(","))[0].split(":"))[0] == "CCDS"):
+		if((((((linha.split("\t"))[8].split(";"))[2].split("="))[1].split(","))[0].split(":"))[0] == "CCDS" or (((((linha.split("\t"))[8].split(";"))[2].split("="))[1].split(","))[0].split(":"))[0] == "Genbank"):
 			line_element = ((((linha.split("\t"))[8].split(";"))[2].split("="))[1].split(","))[1]
 		else:
 			line_element = ((((linha.split("\t"))[8].split(";"))[2].split("="))[1].split(","))[0]
 		if(lastelement == ''):
 			lastelement = line_element
-		elif(line_element == lastelement):
-			linha = f.readline()
-			continue
-		else:
-			IDlist.append(f.tell())
+		elif(line_element != lastelement):
+			IDlist.append(last_address)
 			lastelement = line_element
+			last_address = f.tell()
+			continue
+
+		last_address = f.tell()
 		linha = f.readline()
 print("Size: " + str(len(IDlist)))
 
@@ -215,23 +204,29 @@ print("Time Elapsed: " + str(datetime.now() - start_time))
 #------------------------------------------------------------
 # Starts ORF extraction
 
+mrnafile = open("mrna.gff", "r")
 cdsfile = open("cds.gff", "r")
-lastGeneID = ''
-IDIndex = 0
 resultfile = open("mrnainfo.gff", "w")
 resultfile.write("#GeneID" + "\t" + "rna_code" + "\t" + "lowest_entry" + "\t" + "highest_entry" + "\n")
-
 resultfile.close()
+logfile = open("cleaninglog.txt", "w")
+logfile.close()
+
+lastGeneID = ''
+linecount = 0
+IDIndex = 0
 
 print("Starting mRNAs' ORF extraction...")
 
-for line in mrnafile:
+linha_2 = mrnafile.readline()
+
+while linha_2:
 	highestEntry = 0
 	lowestEntry = 900000000000000000000
 	print("Processing mRNA #" + str(linecount + 1))
 	linecount = linecount + 1
 
-	splitmRNA = line.split("\t")
+	splitmRNA = linha_2.split("\t")
 	splitmRNAData = splitmRNA[8].split(";")
 	if(lastGeneID == ''):
 		lastGeneID = ((splitmRNAData[2].split("="))[1].split(","))[0]
@@ -243,15 +238,16 @@ for line in mrnafile:
 		cdsfile.seek(IDlist[IDIndex],0)
 
 	found = False
-	for line in cdsfile:
-		splitCDS = line.split("\t")
+	linha = cdsfile.readline()
+
+	while linha:
+		splitCDS = linha.split("\t")
 		splitCDSData = splitCDS[8].split(";")
-		if(((splitCDSData[2].split("="))[1].split(":"))[0] == "CCDS"):
+		if(((splitCDSData[2].split("="))[1].split(":"))[0] == "CCDS" or ((splitCDSData[2].split("="))[1].split(":"))[0] == "Genbank"):
 			CompareID = ((splitCDSData[2].split("="))[1].split(","))[1]
 		else:
 			CompareID = ((splitCDSData[2].split("="))[1].split(","))[0]
 		if(CompareID != lastGeneID):  # stop iterating if out of index range
-			print(str(lastGeneID) + "\t" + str(CompareID))
 			break
 		if(lastGeneID == CompareID and (splitmRNAData[0].split("="))[1] == (splitCDSData[1].split("="))[1]):
 			found = True
@@ -259,6 +255,7 @@ for line in mrnafile:
 				lowestEntry = int(splitCDS[3])
 			if(int(splitCDS[4]) > highestEntry):
 				highestEntry = int(splitCDS[4])
+		linha = cdsfile.readline()
 	if(not found):
 		logfile = open("cleaninglog.txt", "a")
 		logfile.write(((splitmRNAData[2].split("="))[1].split(","))[0] + "\t" + (splitmRNAData[0].split("="))[1] + "\t" + "CDS not found\n")
@@ -267,7 +264,8 @@ for line in mrnafile:
 		resultfile = open("mrnainfo.gff", "a")
 		resultfile.write(((splitmRNAData[2].split("="))[1].split(","))[0] + "\t" + (splitmRNAData[0].split("="))[1] + "\t" + str(lowestEntry) + "\t" + str(highestEntry) + "\n")
 		resultfile.close()
+	linha_2 = mrnafile.readline()
 
 print("Process Finished!")
 print("Total Time Elapsed: " + str(datetime.now() - start_time))
-'''
+
