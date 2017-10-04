@@ -208,8 +208,8 @@ with open(os.path.splitext(args.gff)[0] + "_CDS_Sorted.gff", "r") as f:
 		elif(line_element != lastelement):
 			IDlist.append(last_address)
 			lastelement = line_element
-			#last_address = f.tell()
-			#continue
+			last_address = f.tell()
+			continue
 
 		last_address = f.tell()
 		linha = f.readline()
