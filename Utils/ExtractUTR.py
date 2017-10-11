@@ -250,7 +250,8 @@ linha_2 = mrnafile.readline()
 while linha_2:
 	highestEntry = 0
 	lowestEntry = 900000000000000000000
-	print("Processing mRNA #" + str(linecount + 1))
+	sys.stdout.write('\r' + "Processing mRNA #" + str(linecount+1))
+	sys.stdout.flush()
 	linecount = linecount + 1
 
 	splitmRNA = linha_2.split("\t")
