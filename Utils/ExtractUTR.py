@@ -415,15 +415,15 @@ while line_mRNA:  # Iterates through the mRNA file
 
 	if(nocds): # Prints an error message in logfile
 		logfile = open("cleaninglog.txt", "a")
-		logfile.write(((splitmRNAData[RNAData_DbxrefIndex].split("="))[1].split(","))[0] + "\t" + (splitmRNAData[RNAData_IDIndex].split("="))[1] + "\t" + "No CDS positions found\n")
+		logfile.write((((splitmRNAData[RNAData_DbxrefIndex].split("="))[1].split(":"))[1].split(","))[0] + "\t" + (splitmRNAData[RNAData_IDIndex].split("="))[1] + "\t" + "No CDS positions found\n")
 		logfile.close()
 	elif(not found): # Prints an error message in logfile
 		logfile = open("cleaninglog.txt", "a")
-		logfile.write(((splitmRNAData[RNAData_DbxrefIndex].split("="))[1].split(","))[0] + "\t" + (splitmRNAData[RNAData_IDIndex].split("="))[1] + "\t" + "Invalid Entry\n")
+		logfile.write((((splitmRNAData[RNAData_DbxrefIndex].split("="))[1].split(":"))[1].split(","))[0] + "\t" + (splitmRNAData[RNAData_IDIndex].split("="))[1] + "\t" + "Invalid Entry\n")
 		logfile.close()		
 	else: # Prints all extracted results from file
 		resultfile = open("mrnainfo.txt", "a")
-		resultfile.write(((splitmRNAData[RNAData_DbxrefIndex].split("="))[1].split(","))[0] + "\t" + (splitmRNAData[RNAData_IDIndex].split("="))[1] + "\t" + str(lowestEntry) + "\t" + str(highestEntry) + "\t")
+		resultfile.write((((splitmRNAData[RNAData_DbxrefIndex].split("="))[1].split(":"))[1].split(","))[0] + "\t" + (splitmRNAData[RNAData_IDIndex].split("="))[1] + "\t" + str(lowestEntry) + "\t" + str(highestEntry) + "\t")
 		if(splitmRNA[6] == "+"):
 			resultfile.write("plus" + "\n")
 		else:
