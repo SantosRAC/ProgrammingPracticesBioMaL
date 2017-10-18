@@ -125,7 +125,7 @@ def MergeSort_mRNA(lista):
 			k=k+1
 	return lista
 
-# ------ Argparsing ------------
+# ------ Argsparsing ------------
 sys.setrecursionlimit(1000000) # Default = 10000
 parser = argparse.ArgumentParser(description='Extracts UTR length from mRNA entries', add_help=True)
 parser.add_argument('-g','--gff', dest='gff', metavar='inputGFF', type=str, help='GFF containing information about features in genome', required=True)
@@ -164,6 +164,7 @@ else:
 
 # Sorts mRNA file
 
+
 if(not(os.path.isfile(os.path.splitext(args.gff)[0] + "_mRNA_Sorted.gff"))):
 	print("Starting mRNA file sorting...")
 	mrnafile = open(os.path.splitext(args.gff)[0] + "_mRNA.gff", "r")
@@ -172,11 +173,10 @@ if(not(os.path.isfile(os.path.splitext(args.gff)[0] + "_mRNA_Sorted.gff"))):
 
 	while linha: # Appends all lines to mrna list
 		mrna.append(linha)
-		linha = mrnafile.readline()
-
+		linha = mrnafile.readline()		
 	mrnafile.close()
 
-	mrna = MergeSort_mRNA(mrna) # Sorts the list
+	mrna= MergeSort_mRNA(mrna) # Sorts the list
 
 	# Writes back list mrna to mRNA_Sorted file
 	print("Writing sorted file...")
@@ -195,6 +195,8 @@ else:
 # ------------------------------------------------------
 # Sorts CDS file
 
+CDSData_Indexes = []
+
 if(not(os.path.isfile(os.path.splitext(args.gff)[0] + "_CDS_Sorted.gff"))):
 	print("Starting CDS file sorting...")
 	cdsfile = open(os.path.splitext(args.gff)[0] + "_CDS.gff", "r")
@@ -204,8 +206,9 @@ if(not(os.path.isfile(os.path.splitext(args.gff)[0] + "_CDS_Sorted.gff"))):
 	while linha: # Appends all lines to cds list
 		cds.append(linha)
 		linha = cdsfile.readline()
+	cdsfile.close()
 
-	cds = MergeSort_CDS(cds) # Sorts the list
+	cds= MergeSort_CDS(cds) # Sorts the list
 
 	# Writes back list cds to CDS_Sorted file
 	print("Writing sorted file...")
@@ -229,23 +232,42 @@ lastelement = ''  # ID Variable to check wheather there was a partition change
 
 IDlist = [0]  # List containing all the "addresses" of the partitions in a file
 Comparelist = []
-CDSData_DbxrefIndex = -1
+foundField = False
+
+# Creates an index list for Dbxref field
+if(os.path.isfile(os.path.splitext(args.gff)[0] + "_CDS_Sorted.gff")):
+	with open(os.path.splitext(args.gff)[0] + "_CDS_Sorted.gff", "r") as f:
+
+		linha = f.readline()
+
+		while linha: # Appends all lines to mrna list
+			i = 0
+			foundField = False
+			splitString = ((linha.split("\t"))[8].split(";"))
+
+			# Creates a list of Dbxref field indexes
+			for element in splitString: 
+				if(foundField):
+					continue
+				if(element[0] == "D" and element[1] == "b" and element[2] == "x"):
+					CDSData_Indexes.append(i)
+					foundField = True
+				else:
+					i = i + 1
+			linha = f.readline()
+
+			if(not foundField):  # If GeneID field is not found; Kills the script
+				print("Following line contains no GeneID information: " + linha)
+				sys.exit()
 
 with open(os.path.splitext(args.gff)[0] + "_mRNA_Sorted.gff", "r") as f:
 	linha = f.readline()
+	j = 0
 
 	# Adds all mRNA IDs to Compare List
 	while linha:
-		j = 0
-		# Finds indexes of Parent and Dbxref fields
-		for element in ((linha.split("\t"))[8].split(";")): 
-			if(element[0] == "D" and element[1] == "b" and element[2] == "x"):
-				CDSData_DbxrefIndex = j
-			else:
-				j = j + 1
-
-		line_element = (((((linha.split("\t"))[8].split(";"))[CDSData_DbxrefIndex].split("="))[1].split(","))[0].split(":"))[1]
-		j = 0
+		line_element = (((((linha.split("\t"))[8].split(";"))[CDSData_Indexes[j]].split("="))[1].split(","))[0].split(":"))[1]
+		j = j + 1
 		if(lastelement == ''):
 			lastelement = line_element
 		elif(line_element != lastelement):
@@ -254,26 +276,17 @@ with open(os.path.splitext(args.gff)[0] + "_mRNA_Sorted.gff", "r") as f:
 
 lastelement = ''
 
-
 with open(os.path.splitext(args.gff)[0] + "_CDS_Sorted.gff", "r") as f:
 	linha = f.readline()
+	j = 0
 
 	# Compares the IDs of the actual and last element's ID. If there is a change, a new partition is added
 	# Only CDS' IDs that are in Compare List are added as a partition. This operation discards all CDS data that have no related mRNA.
 	while linha:
-		j = 0
-
-		# Finds indexes of Parent and Dbxref fields
-		for element in ((linha.split("\t"))[8].split(";")): 
-			if(element[0] == "D" and element[1] == "b" and element[2] == "x"):
-				CDSData_DbxrefIndex = j
-			else:
-				j = j + 1
-
-		if((((((linha.split("\t"))[8].split(";"))[CDSData_DbxrefIndex].split("="))[1].split(","))[0].split(":"))[0] == "CCDS" or (((((linha.split("\t"))[8].split(";"))[2].split("="))[1].split(","))[0].split(":"))[0] == "Genbank"):
-			line_element = (((((linha.split("\t"))[8].split(";"))[CDSData_DbxrefIndex].split("="))[1].split(","))[1].split(":"))[1]
+		if((((((linha.split("\t"))[8].split(";"))[CDSData_Indexes[j]].split("="))[1].split(","))[0].split(":"))[0] == "CCDS" or (((((linha.split("\t"))[8].split(";"))[CDSData_Indexes[j]].split("="))[1].split(","))[0].split(":"))[0] == "Genbank"):
+			line_element = (((((linha.split("\t"))[8].split(";"))[CDSData_Indexes[j]].split("="))[1].split(","))[1].split(":"))[1]
 		else:
-			line_element = (((((linha.split("\t"))[8].split(";"))[CDSData_DbxrefIndex].split("="))[1].split(","))[0].split(":"))[1]
+			line_element = (((((linha.split("\t"))[8].split(";"))[CDSData_Indexes[j]].split("="))[1].split(","))[0].split(":"))[1]
 		if(lastelement == ''):
 			lastelement = line_element
 		elif(line_element != lastelement):
@@ -283,6 +296,7 @@ with open(os.path.splitext(args.gff)[0] + "_CDS_Sorted.gff", "r") as f:
 			last_address = f.tell()
 			continue
 
+		j = j + 1
 		last_address = f.tell()
 		linha = f.readline()
 
@@ -292,6 +306,35 @@ print("Time Elapsed: " + str(datetime.now() - start_time))
 
 #------------------------------------------------------------
 # Starts ORF extraction
+
+RNAData_Indexes = []
+
+# Creates an index list for Dbxref field on mRNA file
+if(os.path.isfile(os.path.splitext(args.gff)[0] + "_mRNA_Sorted.gff")):
+	with open(os.path.splitext(args.gff)[0] + "_mRNA_Sorted.gff", "r") as f:
+
+		linha = f.readline()
+
+		while linha: # Appends all lines to mrna list
+			i = 0
+			foundField = False
+			splitString = ((linha.split("\t"))[8].split(";"))
+
+			# Creates a list of Dbxref field indexes
+			for element in splitString: 
+				if(foundField):
+					continue
+				if(element[0] == "D" and element[1] == "b" and element[2] == "x"):
+					RNAData_Indexes.append(i)
+					foundField = True
+				else:
+					i = i + 1
+			linha = f.readline()
+
+			if(not foundField):  # If GeneID field is not found; Kills the script
+				print("Following line contains no GeneID information: " + linha)
+				sys.exit()
+
 
 # Opens files and print their header information
 mrnafile = open(os.path.splitext(args.gff)[0] + "_mRNA_Sorted.gff", "r")
@@ -317,40 +360,26 @@ while line_mRNA:  # Iterates through the mRNA file
 	sys.stdout.flush()
 	linecount = linecount + 1
 	i = 0
-	j = 0
 
-	# Variables that represent ID and Dbxref fields in the gff
+	# Variable that represent ID field in the gff
 	RNAData_IDIndex = -1
-	RNAData_DbxrefIndex = -1
 
 	# Splitting of file line tabs
 	splitmRNA = line_mRNA.split("\t")
 	splitmRNAData = splitmRNA[8].split(";")
 
-	for element in splitmRNAData:  # Finds indexes of ID and Dbxref fields
+	for element in splitmRNAData:  # Finds index of ID field
 		if(element[0] == "I" and element[1] == "D"):
 			RNAData_IDIndex = i
 		else:
-			i = i + 1
-
-		if(element[0] == "D" and element[1] == "b" and element[2] == "x"):
-			RNAData_DbxrefIndex = j
-		else:
-			j = j + 1
-
-	if(RNAData_DbxrefIndex == -1): # If no Dbxref field found
-		logfile = open("cleaninglog.txt", "a")
-		logfile.write("Line: " + str(linecount+1) + "\t"  + "No GeneID\n")
-		logfile.close()
-		line_mRNA = mrnafile.readline()
-		continue			
+			i = i + 1		
 
 	# Get actual GeneID and checks if still in the same partition
 	# Skips file to the next partition on the next iteration
 	if(lastGeneID == ''):  
-		lastGeneID = int((((splitmRNAData[RNAData_DbxrefIndex].split("="))[1].split(","))[0].split(":"))[1])
-	elif(lastGeneID != int((((splitmRNAData[RNAData_DbxrefIndex].split("="))[1].split(","))[0].split(":"))[1])):
-		lastGeneID = int((((splitmRNAData[RNAData_DbxrefIndex].split("="))[1].split(","))[0].split(":"))[1])
+		lastGeneID = int((((splitmRNAData[RNAData_Indexes[linecount-1]].split("="))[1].split(","))[0].split(":"))[1])
+	elif(lastGeneID != int((((splitmRNAData[RNAData_Indexes[linecount-1]].split("="))[1].split(","))[0].split(":"))[1])):
+		lastGeneID = int((((splitmRNAData[RNAData_Indexes[linecount-1]].split("="))[1].split(","))[0].split(":"))[1])
 		IDIndex = IDIndex + 1
 		cdsfile.seek(IDlist[IDIndex],0)
 	else:
@@ -359,7 +388,7 @@ while line_mRNA:  # Iterates through the mRNA file
 
 	if(RNAData_IDIndex == -1): # If no ID field found
 		logfile = open("cleaninglog.txt", "a")
-		logfile.write(((splitmRNAData[RNAData_DbxrefIndex].split("="))[1].split(","))[0] + "\t"  + "No RNA ID\n")
+		logfile.write(((splitmRNAData[RNAData_Indexes[linecount-1]].split("="))[1].split(","))[0] + "\t"  + "No RNA ID\n")
 		logfile.close()	
 		line_mRNA = mrnafile.readline()
 		continue		
@@ -395,13 +424,14 @@ while line_mRNA:  # Iterates through the mRNA file
 			line_CDS = cdsfile.readline()
 			continue
 
-		# Checks if GeneID and Parent-ID information matches
+		# Checks if still in the same partition
 		if(((splitCDSData[CDSData_DbxrefIndex].split("="))[1].split(":"))[0] == "CCDS" or ((splitCDSData[CDSData_DbxrefIndex].split("="))[1].split(":"))[0] == "Genbank"):
 			CompareID = int((((splitCDSData[CDSData_DbxrefIndex].split("="))[1].split(","))[1].split(":"))[1])
 		else:
 			CompareID = int((((splitCDSData[CDSData_DbxrefIndex].split("="))[1].split(","))[0].split(":"))[1])
 		if(CompareID != lastGeneID):  # Stops iterating if out of partition range
 			break
+		# Checks if GeneID and Parent-ID information matches
 		if(lastGeneID == CompareID and int(((splitmRNAData[RNAData_IDIndex].split("="))[1].split("a"))[1]) == int((((splitCDSData[CDSData_ParentIndex].split("="))[1].split("a"))[1]))):
 			found = True
 			if(splitCDS[3].isdigit()): # Checks if start and end positions are the lowest or highest possible
@@ -415,15 +445,15 @@ while line_mRNA:  # Iterates through the mRNA file
 
 	if(nocds): # Prints an error message in logfile
 		logfile = open("cleaninglog.txt", "a")
-		logfile.write((((splitmRNAData[RNAData_DbxrefIndex].split("="))[1].split(":"))[1].split(","))[0] + "\t" + (splitmRNAData[RNAData_IDIndex].split("="))[1] + "\t" + "No CDS positions found\n")
+		logfile.write((((splitmRNAData[RNAData_Indexes[linecount-1]].split("="))[1].split(":"))[1].split(","))[0] + "\t" + (splitmRNAData[RNAData_IDIndex].split("="))[1] + "\t" + "No CDS positions found\n")
 		logfile.close()
 	elif(not found): # Prints an error message in logfile
 		logfile = open("cleaninglog.txt", "a")
-		logfile.write((((splitmRNAData[RNAData_DbxrefIndex].split("="))[1].split(":"))[1].split(","))[0] + "\t" + (splitmRNAData[RNAData_IDIndex].split("="))[1] + "\t" + "Invalid Entry\n")
+		logfile.write((((splitmRNAData[RNAData_Indexes[linecount-1]].split("="))[1].split(":"))[1].split(","))[0] + "\t" + (splitmRNAData[RNAData_IDIndex].split("="))[1] + "\t" + "Invalid Entry\n")
 		logfile.close()		
 	else: # Prints all extracted results from file
 		resultfile = open("mrnainfo.txt", "a")
-		resultfile.write((((splitmRNAData[RNAData_DbxrefIndex].split("="))[1].split(":"))[1].split(","))[0] + "\t" + (splitmRNAData[RNAData_IDIndex].split("="))[1] + "\t" + str(lowestEntry) + "\t" + str(highestEntry) + "\t")
+		resultfile.write((((splitmRNAData[RNAData_Indexes[linecount-1]].split("="))[1].split(":"))[1].split(","))[0] + "\t" + (splitmRNAData[RNAData_IDIndex].split("="))[1] + "\t" + str(lowestEntry) + "\t" + str(highestEntry) + "\t")
 		if(splitmRNA[6] == "+"):
 			resultfile.write("plus" + "\n")
 		else:
