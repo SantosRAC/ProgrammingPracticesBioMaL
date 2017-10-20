@@ -385,14 +385,6 @@ while line_mRNA:  # Iterates through the mRNA file
 		cdsfile.seek(IDlist[IDIndex],0)
 	else:
 		cdsfile.seek(IDlist[IDIndex],0)
-
-
-	if(RNAData_IDIndex == -1): # If no ID field found
-		logfile = open("cleaninglog.txt", "a")
-		logfile.write(((splitmRNAData[RNAData_Indexes[linecount-1]].split("="))[1].split(","))[0] + "\t"  + "No RNA ID\n")
-		logfile.close()	
-		line_mRNA = mrnafile.readline()
-		continue		
 	
 	# Logfile variables
 	found = False
