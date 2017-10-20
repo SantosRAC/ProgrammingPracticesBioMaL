@@ -343,6 +343,7 @@ resultfile = open("mrnainfo.txt", "w")
 resultfile.write("#GeneID" + "\t" + "rna_code" + "\t" + "cds_start_position" + "\t" + "cds_final_position" + "\t" + "strand" + "\n")
 resultfile.close()
 logfile = open("cleaninglog.txt", "w")
+logfile.write("#GeneID\trna_code\terror_message\n")
 logfile.close()
 
 lastGeneID = ''
