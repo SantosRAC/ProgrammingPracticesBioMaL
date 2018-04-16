@@ -20,15 +20,11 @@ lineNumber = args.linePerFile
 	
 '''
 
-# Extracts all identifiers from a .csv file and returns a list of them
+# Extracts all target identifiers from a .csv file and returns a list of them
 def CsvExtractIdentifiers(myFile):
     Identifiers = []
-    temp = ""
     for line in myFile:
-        temp = line.split(";")
-        Identifiers.append(temp[4])
-    Identifiers.pop(0)
-
+        Identifiers.append(int(line.split(";")[4]))
     return Identifiers
 
 
@@ -62,7 +58,7 @@ def CsvSplitWriter(linesPerFile, baseName, myList):
 
     outFile = open(baseName + str(filecounter) + ".csv", "w")
     for element in myList:
-        outFile.write(element + "\r")
+        outFile.write(str(element) + "\n")
         if(counter == linesPerFile):
             counter = 0
             filecounter = filecounter + 1
