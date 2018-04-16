@@ -1,4 +1,4 @@
-# Comparing identifiers in a FASTA file to identifiers in a CSV file
+# Returns a csv file of commom elements between two files
 __author__      = "Henrique Frajacomo & Renato Augusto Correa dos Santos"
 
 import csv  # Import CSV files
@@ -20,14 +20,20 @@ list3 = args.list3
 
 '''
 # Read a FASTA with microRNAs and returns a list with identifiers
-def Extract_txt_miRNA_ID(myFile, myList):
+def Extract_fasta_miRNA_ID(myFile, myList):
     i = True
     for line in myFile:
         for word in line.split():
-            if (i):
-                myList.append(word[1:])
+            if(i):
+                myList.append(word[1:].lower())
             break
         i = not i
+    return myList
+
+# Read a txt with microRNAs and returns a list with identifiers
+def Extract_txt_miRNA_ID(myFile, myList):
+    for line in myFile:
+        myList.append(line[:-1])
     return myList
 
 # Read microRNA identifiers in CSV file and returns a list with these IDs
@@ -35,18 +41,25 @@ def Extract_csv_miRNA_ID(myFile, myList):
     x = 0
     for line in myFile:
         if(x>0):
-            myList.append(line[:-1].rstrip("\r"))
-        x = x+1
+        	myList.append(line.strip("\n").lower())
+        else:
+        	x = x+1
     return myList
 
 # Compares the lists and returns a list with common elements
 def ListInList(myList1, myList2):
     listResults = []
+
     x = 0
-    for x in range(0, len(myList1)):
-        if(myList1[x] in myList2):
-            listResults.append(myList1[x])
+    for x in range(0, len(myList2)):
+        if(myList2[x].split(";")[1] in myList1):
+            listResults.append(myList2[x])
+        x = x + 1
     return listResults
+
+# Takes all the elements in a list 2 out of list 1
+def ListSubstraction(list1, list2):
+    return set(list1) - set(list2)
 
 # TODO
 def PrintListtoFile(myList, myFile):
@@ -68,9 +81,10 @@ list1OBJ=open(list1,"r")
 list2OBJ=open(list2,"r")
 list3OBJ=open(list3,"w")
 
-line1 = Extract_txt_miRNA_ID(list1OBJ, line1)
+line1 = Extract_fasta_miRNA_ID(list1OBJ, line1)
 line2 = Extract_csv_miRNA_ID(list2OBJ, line2)
 resultLine = ListInList(line1, line2)
+#resultLine = list(set(line1)&set(line2))
 PrintListtoFile(resultLine, list3OBJ)
 
 list1OBJ.close()
